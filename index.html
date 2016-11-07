@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Proto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <style>
+    body
+    {
+        margin:0;
+        padding:0;
+    }
+    </style>
+    <script src="source/datgui.min.js"></script>
+    <script src="source/gl-matrix.js"></script>
+    <script src="source/Graphics.js"></script>
+    <script src="source/Prototype.js"></script>
+    <script src="source/Mesh.js"></script>
+    <script src="source/GeometryInstance.js"></script>
+    <script src="source/MeshInstance.js"></script>
+    <script src="source/LineInstance.js"></script>
+    <script src="source/Meshes/Rectangle.js"></script>
+    <script src="source/Meshes/Triangle.js"></script>
+    <script src="source/Meshes/Circle.js"></script>
+
+    <!-- Replace this with your prototype -->
+    <script src="source/Example.js"></script>
+    <script>
+        var proto;
+        function onLoad()
+        {
+            proto = new Prototype(Example, document.getElementById("canvas"));
+        }
+    </script>
+</head>
+<body onload="onLoad()">
+    <canvas id="canvas" style="position:absolute;"></canvas>
+</body>
+</html>
+    

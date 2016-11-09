@@ -242,6 +242,36 @@ var Prototype = (function ()
 		var _Logic = new logic(this);
 		_ScheduleAdvance();
 		_Advance();
+
+
+		Object.defineProperties(this, 
+		{
+			scale:
+			{
+				get: function()
+				{
+					return _Scale;
+				},
+				set: function(is)
+				{
+					_Scale = is;
+				}
+			},
+			width:
+			{
+				get: function()
+				{
+					return canvas.width;
+				}
+			},
+			height:
+			{
+				get: function()
+				{
+					return canvas.height;
+				}
+			}
+		});
 	}
 
 	return Prototype;

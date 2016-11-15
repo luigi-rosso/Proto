@@ -24,6 +24,11 @@ var Prototype = (function ()
 		var _MaxZoom = 12.0;
 		var _OverrideViewTransform = null;
 		var _ScreenScale = /*window.devicePixelRatio ||*/ 1.0;
+		var _OverrideRenderPath = null;
+		var _OverrideMouseDown = null;
+		var _OverrideMouseUp = null;
+		var _OverrideMouseWheel = null;
+		var _OverrideMouseDrag = null;
 
 		function _ZoomTo(x, y, scale)
 		{
@@ -101,11 +106,17 @@ var Prototype = (function ()
 		function _Draw()
 		{
 			_Graphics.clear();
-
-			for(var i = 0; i < _MeshInstances.length; i++)
+			if(_OverrideRenderPath)
 			{
-				var mi = _MeshInstances[i];
-				mi.draw(_Graphics, _OverrideViewTransform || _ViewTransform, _Scale);
+				_OverrideRenderPath(_Graphics);
+			}
+			else
+			{
+				for(var i = 0; i < _MeshInstances.length; i++)
+				{
+					var mi = _MeshInstances[i];
+					mi.draw(_Graphics, _OverrideViewTransform || _ViewTransform, _Scale);
+				}
 			}
 		}
 
@@ -145,13 +156,25 @@ var Prototype = (function ()
 			_LastMouse[0] = ev.clientX;
 			_LastMouse[1] = ev.clientY;
 
-			_TranslationTarget[0] += dx;
-			_TranslationTarget[1] -= dy;
+			if(_OverrideMouseDrag)
+			{
+				_OverrideMouseDrag(ev, dx, dy, _DragButton);
+			}
+			else if(_DragButton == 2)
+			{
+				_TranslationTarget[0] += dx;
+				_TranslationTarget[1] -= dy;
+			}
 		}
 
 
 		function _OnMouseWheel(ev)
 		{
+			if(_OverrideMouseWheel)
+			{
+				_OverrideMouseWheel(ev);
+				return;
+			}
 			var scaleInc = (ev.wheelDeltaY/1000.0)*2;
 			if(ev.ctrlKey)
 			{
@@ -161,11 +184,17 @@ var Prototype = (function ()
 			return true;
 		}
 
+		var _DragButton = 0;
 		canvas.addEventListener("mousewheel", _OnMouseWheel);
 		canvas.addEventListener("mousedown", function(e)
 		{
+			if(_OverrideMouseDown)
+			{
+				_OverrideMouseDown(ev);
+			}
 			e.preventDefault();
-			if(e.button === 2)
+			_DragButton = e.button;
+			//if(e.button === 2)
 			{
 				_LastMouse[0] = e.clientX;
 				_LastMouse[1] = e.clientY;
@@ -175,6 +204,10 @@ var Prototype = (function ()
 
 		canvas.addEventListener("mouseup", function(e)
 		{
+			if(_OverrideMouseUp)
+			{
+				_OverrideMouseUp(ev);
+			}
 			e.preventDefault();
 			canvas.removeEventListener("mousemove", _MouseDragged, true);
 
@@ -184,9 +217,18 @@ var Prototype = (function ()
 		{
 			if(mesh.constructor === Float32Array)
 			{
-				var m = new LineInstance(mesh);
-				_MeshInstances.push(m);
-				return m;
+				if(mesh.isLine)
+				{
+					var m = new LineInstance(mesh);
+					_MeshInstances.push(m);
+					return m;
+				}
+				else
+				{
+					var m = new WireFrameInstance(mesh);
+					_MeshInstances.push(m);
+					return m;
+				}
 			}
 			var m = new MeshInstance(mesh);
 			_MeshInstances.push(m);
@@ -213,6 +255,7 @@ var Prototype = (function ()
 		};
 
 		this.makeLine = _Graphics.makeLine;
+		this.makeWireFrame = _Graphics.makeWireFrame;
 
 		this.setViewTransform = function(vt)
 		{
@@ -237,15 +280,47 @@ var Prototype = (function ()
 		{
 			return _OverrideViewTransform != null;
 		};
-		
 
-		var _Logic = new logic(this);
-		_ScheduleAdvance();
-		_Advance();
+		this.addRenderer = function(renderer)
+		{
+			_Graphics.initRenderer(renderer);
+		};
+
+		this.useCustomRenderPath = function(path)
+		{
+			_OverrideRenderPath = path;
+		};
+
+		this.overrideMouseDown = function(md)
+		{
+			_OverrideMouseDown = md;
+		};
+
+		this.overrideMouseUp = function(md)
+		{
+			_OverrideMouseUp = md;
+		};
+
+		this.overrideMouseWheel = function(md)
+		{
+			_OverrideMouseWheel = md;
+		};
+
+		this.overrideMouseDrag = function(md)
+		{
+			_OverrideMouseDrag = md;
+		};
 
 
 		Object.defineProperties(this, 
 		{
+			graphics:
+			{
+				get: function()
+				{
+					return _Graphics;
+				}
+			},
 			scale:
 			{
 				get: function()
@@ -272,6 +347,10 @@ var Prototype = (function ()
 				}
 			}
 		});
+
+		var _Logic = new logic(this);
+		_ScheduleAdvance();
+		_Advance();
 	}
 
 	return Prototype;

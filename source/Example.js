@@ -11,6 +11,16 @@ function Example(proto)
                     [-200.0, 100.0]
                 ], true));
 
+	var _WireMesh = proto.addMeshInstance(proto.makeWireFrame([
+                -100.0, -100.0,
+                100.0, -100.0,
+                100.0, 100.0,
+
+                -100.0, -100.0,
+                100.0, 100.0,
+                -100.0, 100.0
+            ], 2));
+
 	var _Tri = proto.addMeshInstance(proto.makeMesh(Triangle, 20, 50));
 	_Tri.x = 400;
 

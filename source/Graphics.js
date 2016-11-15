@@ -2,12 +2,15 @@ var Graphics = (function()
 {
 	function Graphics(canvas)
 	{
+		var _This = this;
 		var contextOptions = {
 			premultipliedAlpha: false,
 			preserveDrawingBuffer: true
 		};
 
 		var _GL = canvas.getContext("webgl", contextOptions) || canvas.getContext("experimental-webgl", contextOptions);
+
+		_GL.getExtension("OES_standard_derivatives");
 
 		var _Projection = mat4.create();
 		var _Transform = mat4.create();
@@ -37,9 +40,12 @@ var Graphics = (function()
 
 		function _Clear()
 		{
-			//_GL.clearColor(0.0, 0.0, 0.0, 0.0);
-			_GL.clearColor(0.3628, 0.3628, 0.3628, 1.0);
-			_GL.clear(_GL.COLOR_BUFFER_BIT);
+			//_GL.clearColor(0.0, 0.0, 0.0, 1.0);
+			_GL.clearColor(0.222, 0.222, 0.222, 1.0);
+			//_GL.clearColor(0.3628, 0.3628, 0.3628, 1.0);
+			_GL.clear(_GL.COLOR_BUFFER_BIT | _GL.DEPTH_BUFFER_BIT);
+			_GL.enable(_GL.CULL_FACE);
+        	_GL.frontFace(_GL.CW);
 		}
 
 		function _DeleteTexture(tex)
@@ -310,11 +316,11 @@ var Graphics = (function()
 
 		function _InitializeShader(s)
 		{
-			if (!(s.fragment = _GetShader(s.fragment)))
+			if (!(s.fragment = _GetShader(s.fragment, ".fs")))
 			{
 				return null;
 			}
-			if (!(s.vertex = _GetShader(s.vertex)))
+			if (!(s.vertex = _GetShader(s.vertex, ".vs")))
 			{
 				return null;
 			}
@@ -461,10 +467,62 @@ var Graphics = (function()
 				output[last + 4 + 5] = output[4 + 5] = -miterLen2;
 			}
 
+			var r = new Float32Array(output);
+			r.isLine = true;
+			return r;
+		}
+
+		function _MakeWireFrame(buffer, components, stride, offset)
+		{
+			if(!components)
+			{
+				components = 3;
+			}
+			if(!offset)
+			{
+				offset = 0;
+			}
+			if(!stride)
+			{
+				stride = components;
+			}
+
+			var output = [];
+
+			var triangleCount = buffer.length/stride/3;
+			var index = offset;
+
+			var barycentricCoords =
+			[
+				[1,0,0],
+				[0,1,0],
+				[0,0,1]
+			];
+			for(var i = 0; i < triangleCount; i++)
+			{
+				for(var v = 0; v < 3; v++)
+				{
+					var j;
+					for(j = 0; j < components; j++)
+					{
+						output.push(buffer[index+j]);
+					}
+					while(j < 3)
+					{
+						output.push(0.0);
+						j++;
+					}
+					var bc = barycentricCoords[v];
+					output.push(bc[0], bc[1], bc[2]);
+
+					index += stride;
+				}
+			}
+
 			return new Float32Array(output);
 		}
 
-		function _GetShader(id)
+		function _GetShader(id, ext)
 		{
 			var s = _CompiledShaders[id];
 			if (s)
@@ -474,14 +532,14 @@ var Graphics = (function()
 
 			var shader = null;
 
-			var shaderScript = _ShaderSources[id];
+			var shaderScript = _ShaderSources[id] || id;
 			if (shaderScript)
 			{
-				if (id.indexOf(".fs") == id.length - 3)
+				if (id.indexOf(".fs") == id.length - 3 || ext === ".fs")
 				{
 					shader = _GL.createShader(_GL.FRAGMENT_SHADER);
 				}
-				else if (id.indexOf(".vs") == id.length - 3)
+				else if (id.indexOf(".vs") == id.length - 3 || ext === ".vs")
 				{
 					shader = _GL.createShader(_GL.VERTEX_SHADER);
 				}
@@ -491,7 +549,7 @@ var Graphics = (function()
 
 				if (!_GL.getShaderParameter(shader, _GL.COMPILE_STATUS))
 				{
-					console.log("Failed to compile", id);
+					console.log("Failed to compile", id, _GL.getShaderInfoLog(shader));
 					return null;
 				}
 				_CompiledShaders[id] = shader;
@@ -505,7 +563,9 @@ var Graphics = (function()
 			"Textured.fs": "#ifdef GL_ES \nprecision highp float;\n #endif\n uniform vec4 Color; uniform float Opacity; uniform sampler2D TextureSampler; varying vec2 TexCoord; void main(void) {vec4 color = texture2D(TextureSampler, TexCoord) * Color; color.a *= Opacity; gl_FragColor = color; }",
 			"Color.fs": "#ifdef GL_ES \nprecision highp float;\n #endif\n uniform vec4 Color; uniform float Opacity; varying vec2 TexCoord; void main(void) {vec4 color = Color; color.a *= Opacity; gl_FragColor = color; }",
 			"Line.vs":"attribute vec2 position;attribute vec2 normal;attribute float miter; uniform mat4 projection;uniform mat4 modelView;uniform float thickness;varying float edge;varying float inner2;void main(){  edge = sign(miter);  inner2 = (thickness - 3.0)/thickness;  vec2 pointPos = position.xy + vec2(normal * thickness/2.0 * miter);  gl_Position = projection * modelView * vec4(pointPos, 0.0, 1.0);}",
-			"Line.fs":"#ifdef GL_ES \nprecision highp float;\n#endif\n uniform vec4 color;varying float edge;varying float inner2;void main(){  float v = abs(edge);  v = smoothstep(inner2, 1.0, v);   gl_FragColor = mix(color, vec4(color.xyz, 0.0), v);}"
+			"Line.fs":"#ifdef GL_ES \nprecision highp float;\n#endif\n uniform vec4 color;varying float edge;varying float inner2;void main(){  float v = abs(edge);  v = smoothstep(inner2, 1.0, v);   gl_FragColor = mix(color, vec4(color.xyz, 0.0), v);}",
+			"Wireframe.vs":"attribute vec3 position;attribute vec3 barycentric;uniform mat4 projection;uniform mat4 modelView;varying vec3 bc;void main(){  bc = barycentric;  gl_Position = projection * modelView * vec4(position, 1.0);}",
+			"Wireframe.fs":"#ifdef GL_ES\nprecision highp float;\n#endif\n#extension GL_OES_standard_derivatives : enable\nuniform vec4 edgeColor;uniform vec4 innerColor;uniform float thickness;varying vec3 bc;void main(){	vec3 d = fwidth(bc);	vec3 a3 = smoothstep(vec3(0.0), d*thickness, bc);	float edgeFactor = min(min(a3.x, a3.y), a3.z);	gl_FragColor = mix(edgeColor, innerColor, edgeFactor);}"
 		};
 
 		var _TexturedShader = _InitializeShader(
@@ -578,7 +638,7 @@ var Graphics = (function()
 				Color: "Color"
 			}
 		});
-
+		
 		var _LineShader = _InitializeShader(
 		{
 			name: "LineShader",
@@ -617,6 +677,41 @@ var Graphics = (function()
 				ModelView: "modelView",
 				Thickness: "thickness",
 				Color: "color"
+			}
+		});
+
+		var _WireFrameShader = _InitializeShader(
+		{
+			name: "WireFrameShader",
+
+			vertex: "Wireframe.vs",
+			fragment: "Wireframe.fs",
+
+			attributes:
+			{
+				VertexPosition:
+				{
+					name: "position",
+					size: 3,
+					stride: 24,
+					offset: 0
+				},
+				VertexBarycentric:
+				{
+					name: "barycentric",
+					size: 3,
+					stride: 24,
+					offset: 12
+				}
+			},
+
+			uniforms:
+			{
+				ProjectionMatrix: "projection",
+				ModelView: "modelView",
+				Thickness: "thickness",
+				EdgeColor: "edgeColor",
+				InnerColor: "innerColor"
 			}
 		});
 
@@ -691,6 +786,7 @@ var Graphics = (function()
 		var _LineBuffer = _MakeVertexBuffer();
 		function _DrawLine(view, transform, line, thickness, opacity, color)
 		{
+			_GL.frontFace(_GL.CCW);
 			view = mat2d.mul(mat2d.create(), transform, view);
 			_LineBuffer.update(line);
 
@@ -712,6 +808,50 @@ var Graphics = (function()
 			_GL.uniformMatrix4fv(uniforms.ProjectionMatrix, false, _Projection);
 
 			_GL.drawArrays(_GL.TRIANGLE_STRIP, 0, line.length/5);
+			_GL.frontFace(_GL.CW);
+		}
+
+		var _MeshBuffer = _MakeVertexBuffer();
+		var _SecondaryColorBuffer = new Float32Array(4);
+		function _DrawWireFrame(view, transform, mesh, thickness, edgeColor, innerColor)
+		{
+			view = mat2d.mul(mat2d.create(), transform, view);
+			_MeshBuffer.update(mesh);
+
+			_ViewTransform[0] = view[0];
+			_ViewTransform[1] = view[1];
+			_ViewTransform[4] = view[2];
+			_ViewTransform[5] = view[3];
+			_ViewTransform[12] = view[4];
+			_ViewTransform[13] = view[5];
+
+			_Bind(_WireFrameShader, _MeshBuffer.id);
+
+			for (var i = 0; i < 4; i++) _ColorBuffer[i] = edgeColor[i];
+			for (var i = 0; i < 4; i++) _SecondaryColorBuffer[i] = innerColor[i];
+
+			var uniforms = _WireFrameShader.uniforms;
+			_GL.uniform4fv(uniforms.EdgeColor, _ColorBuffer);
+			_GL.uniform4fv(uniforms.InnerColor, _SecondaryColorBuffer);
+
+			_GL.uniform1f(uniforms.Thickness, thickness);
+			_GL.uniformMatrix4fv(uniforms.ModelView, false, _ViewTransform);
+			_GL.uniformMatrix4fv(uniforms.ProjectionMatrix, false, _Projection);
+
+			_GL.drawArrays(_GL.TRIANGLES, 0, mesh.length/6);
+		}
+
+		function _EnableDepthTest(enable)
+		{
+			if(enable)
+			{	
+				_GL.enable(_GL.DEPTH_TEST);
+				_GL.depthFunc(_GL.LEQUAL);
+			}
+			else
+			{
+				_GL.disable(_GL.DEPTH_TEST);
+			}
 		}
 
 		this.loadTexture = _LoadTexture;
@@ -727,9 +867,23 @@ var Graphics = (function()
 		this.makeVertexBuffer = _MakeVertexBuffer;
 		this.makeIndexBuffer = _MakeIndexBuffer;
 		this.makeLine = _MakeLine;
+		this.makeWireFrame = _MakeWireFrame;
 		this.drawTextured = _DrawTextured;
 		this.drawColored = _DrawColored;
 		this.drawLine = _DrawLine;
+		this.drawWireFrame = _DrawWireFrame;
+		this.enableDepthTest = _EnableDepthTest;
+		this.getContext = function()
+		{
+			return _GL;
+		};
+		this.initializeShader = _InitializeShader;
+		this.initRenderer = function(renderer)
+		{
+			var r = new renderer();
+			r.initialize(_This);
+		};
+		this.bind = _Bind;
 
 		this.__defineGetter__("viewportWidth", function()
 		{

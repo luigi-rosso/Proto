@@ -232,7 +232,8 @@ var Graphics = (function()
 			}
 			_BlendMode = 5;
 			_GL.enable(_GL.BLEND);
-			_GL.blendFuncSeparate(_GL.ONE, _GL.ONE, _GL.ONE, _GL.ONE);
+			//_GL.blendFuncSeparate(_GL.ONE, _GL.ONE, _GL.ONE, _GL.ONE);
+			_GL.blendFunc(_GL.ONE, _GL.ONE);
 		};
 
 		function VertexBuffer(id)
@@ -854,6 +855,11 @@ var Graphics = (function()
 			}
 		}
 
+		function _EnableDepthWrite(enable)
+		{
+			_GL.depthMask(enable);
+		}
+
 		this.loadTexture = _LoadTexture;
 		this.deleteTexture = _DeleteTexture;
 		this.setSize = _SetSize;
@@ -873,6 +879,7 @@ var Graphics = (function()
 		this.drawLine = _DrawLine;
 		this.drawWireFrame = _DrawWireFrame;
 		this.enableDepthTest = _EnableDepthTest;
+		this.enableDepthWrite = _EnableDepthWrite;
 		this.getContext = function()
 		{
 			return _GL;

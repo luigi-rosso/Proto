@@ -38,6 +38,13 @@ var Graphics = (function()
 			return false;
 		}
 
+		function _SetViewport(width, height)
+		{
+			_ViewportWidth = width;
+			_ViewportHeight = height;
+			_GL.viewport(0, 0, _ViewportWidth, _ViewportHeight);
+		}
+
 		function _Clear()
 		{
 			//_GL.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -891,6 +898,7 @@ var Graphics = (function()
 			r.initialize(_This);
 		};
 		this.bind = _Bind;
+		this.setViewport = _SetViewport;
 
 		this.__defineGetter__("viewportWidth", function()
 		{

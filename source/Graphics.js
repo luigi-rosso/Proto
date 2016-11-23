@@ -5,7 +5,9 @@ var Graphics = (function()
 		var _This = this;
 		var contextOptions = {
 			premultipliedAlpha: false,
-			preserveDrawingBuffer: true
+			preserveDrawingBuffer: true,
+			stencil: true,
+			depth: true
 		};
 
 		var _GL = canvas.getContext("webgl", contextOptions) || canvas.getContext("experimental-webgl", contextOptions);
@@ -49,10 +51,21 @@ var Graphics = (function()
 		{
 			//_GL.clearColor(0.0, 0.0, 0.0, 1.0);
 			_GL.clearColor(0.222, 0.222, 0.222, 1.0);
+			
+			_GL.depthFunc(_GL.LEQUAL);
+			_GL.enable(_GL.DEPTH_TEST);
+			_GL.depthMask(true);
+
 			//_GL.clearColor(0.3628, 0.3628, 0.3628, 1.0);
 			_GL.clear(_GL.COLOR_BUFFER_BIT | _GL.DEPTH_BUFFER_BIT);
 			_GL.enable(_GL.CULL_FACE);
-        	_GL.frontFace(_GL.CW);
+			
+			
+			
+        	_GL.frontFace(_GL.CCW);
+        	_GL.enable(_GL.CULL_FACE);
+
+        	_GL.stencilMask(0x00);
 		}
 
 		function _DeleteTexture(tex)
@@ -794,7 +807,6 @@ var Graphics = (function()
 		var _LineBuffer = _MakeVertexBuffer();
 		function _DrawLine(view, transform, line, thickness, opacity, color)
 		{
-			_GL.frontFace(_GL.CCW);
 			view = mat2d.mul(mat2d.create(), transform, view);
 			_LineBuffer.update(line);
 
@@ -816,7 +828,6 @@ var Graphics = (function()
 			_GL.uniformMatrix4fv(uniforms.ProjectionMatrix, false, _Projection);
 
 			_GL.drawArrays(_GL.TRIANGLE_STRIP, 0, line.length/5);
-			_GL.frontFace(_GL.CW);
 		}
 
 		var _MeshBuffer = _MakeVertexBuffer();

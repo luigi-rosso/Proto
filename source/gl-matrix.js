@@ -3807,6 +3807,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return out;
 	};
 
+	vec3.equal = function(a, b) {
+    return Math.abs(a[0]-b[0]) < glMatrix.EPSILON && Math.abs(a[1]-b[1]) < glMatrix.EPSILON && Math.abs(a[2]-b[2]) < glMatrix.EPSILON;
+};
+
 	/**
 	 * Creates a new vec3 initialized with values from an existing vector
 	 *
@@ -4270,6 +4274,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    out[0] = (m[0] * x + m[4] * y + m[8] * z + m[12]) / w;
 	    out[1] = (m[1] * x + m[5] * y + m[9] * z + m[13]) / w;
 	    out[2] = (m[2] * x + m[6] * y + m[10] * z + m[14]) / w;
+	    return out;
+	};
+
+	// Cirrus added.
+	// 4th vector component is implicitly 0
+	vec3.transformMat4V = function(out, a, m) {
+	    var x = a[0], y = a[1], z = a[2];
+	    out[0] = m[0] * x + m[4] * y + m[8] * z;
+	    out[1] = m[1] * x + m[5] * y + m[9] * z;
+	    out[2] = m[2] * x + m[6] * y + m[10] * z;
 	    return out;
 	};
 

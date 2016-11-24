@@ -18,7 +18,7 @@ var Circle = (function ()
 			angle += inc;
 
 			var nextSeg = (i+1)%(segments)+1;
-			this.addTri([0, i+1, nextSeg]);
+			this.addTri([nextSeg, i+1, 0]);
 		}
 		this.update();
 	}

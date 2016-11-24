@@ -3,10 +3,12 @@ var GeometryInstance = (function ()
 	function GeometryInstance()
 	{
 		this._transform = mat2d.create();
+		this._inverseTransform = null;
 		this._rotation = 0;
 		this._position = vec2.create();
 		this._scale = vec2.set(vec2.create(), 1.0, 1.0);
 		this._dirty = false;
+		this._invertDirty = false;
 	}
 
 	GeometryInstance.prototype = {
@@ -49,6 +51,19 @@ var GeometryInstance = (function ()
 
 			this._dirty = false;
 		},
+		get inverseTransform()
+		{
+			if(this._invertDirty)
+			{
+				if(!this._inverseTransform)
+				{
+					this._inverseTransform = mat2d.create();
+				}
+				mat2d.invert(this._inverseTransform, this._transform);
+				this._invertDirty = false;
+			}
+			return this._inverseTransform;
+		},
 		get position()
 		{
 			return this._position;
@@ -58,6 +73,7 @@ var GeometryInstance = (function ()
 			this._position[0] = val[0];
 			this._position[1] = val[1];
 			this._dirty = true;
+			this._invertDirty = true;
 		},
 		get x() 
 		{
@@ -67,6 +83,7 @@ var GeometryInstance = (function ()
 		{
 			this._position[0] = v;
 			this._dirty = true;
+			this._invertDirty = true;
 		},
 		get y() 
 		{
@@ -76,6 +93,7 @@ var GeometryInstance = (function ()
 		{
 			this._position[1] = v;
 			this._dirty = true;
+			this._invertDirty = true;
 		},
 		get rotation()
 		{
@@ -85,6 +103,7 @@ var GeometryInstance = (function ()
 		{
 			this._rotation = v;
 			this._dirty = true;
+			this._invertDirty = true;
 		},
 		get scale()
 		{
@@ -95,6 +114,7 @@ var GeometryInstance = (function ()
 			this._scale[0] = v[0];
 			this._scale[1] = v[1];
 			this._dirty = true;
+			this._invertDirty = true;
 		}
 	};
 

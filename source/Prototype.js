@@ -165,6 +165,24 @@ var Prototype = (function ()
 				_TranslationTarget[0] += dx;
 				_TranslationTarget[1] -= dy;
 			}
+			else if(_DragInstance)
+			{
+				var v = _OverrideViewTransform || _ViewTransform;
+				var toWorld = mat2d.invert(mat2d.create(), v);
+				var screenMove = vec2.set(vec2.create(), dx, -dy);
+				var worldMove = vec2.transformMat2(vec2.create(), screenMove, toWorld);
+				var localMove = vec2.transformMat2(vec2.create(), worldMove, _DragInstance.inverseTransform);
+
+				if(_DragInstance)
+				{
+					_DragInstance.onDrag(localMove);
+				}
+				else
+				{
+					_DragInstance.x += localMove[0];
+					_DragInstance.y += localMove[1];
+				}
+			}
 		}
 
 
@@ -185,9 +203,11 @@ var Prototype = (function ()
 		}
 
 		var _DragButton = 0;
+		var _DragInstance = null;
 		canvas.addEventListener("mousewheel", _OnMouseWheel);
 		canvas.addEventListener("mousedown", function(e)
 		{
+			_DragInstance = null;
 			if(_OverrideMouseDown)
 			{
 				_OverrideMouseDown(ev);
@@ -199,6 +219,39 @@ var Prototype = (function ()
 				_LastMouse[0] = e.clientX;
 				_LastMouse[1] = e.clientY;
 				canvas.addEventListener("mousemove", _MouseDragged, true);
+			}
+			if(e.button === 0)
+			{
+				var temp = vec2.create();
+				var x = e.clientX;
+				var y = _Graphics.viewportHeight-e.clientY;
+				temp[0] = x;
+				temp[1] = y;
+
+				// get it to view space.
+				var v = _OverrideViewTransform || _ViewTransform;
+				var toWorld = mat2d.invert(mat2d.create(), v);
+				vec2.transformMat2d(temp, temp, toWorld);
+
+				x = temp[0];
+				y = temp[1];
+
+				for(var i = 0; i < _MeshInstances.length; i++)
+				{
+					var mi = _MeshInstances[i];
+					if(mi.canDrag)
+					{
+						var inv = mi.inverseTransform;
+						temp[0] = x;
+						temp[1] = y;
+						vec2.transformMat2d(temp, temp, inv);
+						
+						if(mi.mesh.checkHit(temp[0], temp[1]))
+						{
+							_DragInstance = mi;	
+						}
+					}
+				}
 			}
 		}, true);
 

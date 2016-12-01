@@ -160,7 +160,7 @@ var Prototype = (function ()
 			{
 				_OverrideMouseDrag(ev, dx, dy, _DragButton);
 			}
-			else if(_DragButton == 2)
+			else if(_DragButton == 2 || ev.metaKey)
 			{
 				_TranslationTarget[0] += dx;
 				_TranslationTarget[1] -= dy;

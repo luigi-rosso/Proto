@@ -59,7 +59,7 @@ var GeometryInstance = (function ()
 				{
 					this._inverseTransform = mat2d.create();
 				}
-				mat2d.invert(this._inverseTransform, this._transform);
+				mat2d.invert(this._inverseTransform, this.transform);
 				this._invertDirty = false;
 			}
 			return this._inverseTransform;

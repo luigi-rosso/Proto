@@ -115,6 +115,10 @@ var Prototype = (function ()
 				for(var i = 0; i < _MeshInstances.length; i++)
 				{
 					var mi = _MeshInstances[i];
+					if(mi.isHidden)
+					{
+						continue;
+					}
 					mi.draw(_Graphics, _OverrideViewTransform || _ViewTransform, _Scale);
 				}
 			}
@@ -155,7 +159,6 @@ var Prototype = (function ()
 			var dy = ev.clientY - _LastMouse[1];
 			_LastMouse[0] = ev.clientX;
 			_LastMouse[1] = ev.clientY;
-
 			if(_OverrideMouseDrag)
 			{
 				_OverrideMouseDrag(ev, dx, dy, _DragButton);
@@ -367,6 +370,13 @@ var Prototype = (function ()
 
 		Object.defineProperties(this, 
 		{
+			viewTransform:
+			{
+				get: function()
+				{
+					return _OverrideViewTransform || _ViewTransform;
+				}
+			},
 			graphics:
 			{
 				get: function()

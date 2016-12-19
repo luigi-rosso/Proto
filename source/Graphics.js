@@ -830,6 +830,22 @@ var Graphics = (function()
 			_GL.drawArrays(_GL.TRIANGLE_STRIP, 0, line.length/5);
 		}
 
+		function _DrawLine3D(view, projection, line, thickness, opacity, color)
+		{
+			_LineBuffer.update(line);
+			_Bind(_LineShader, _LineBuffer.id);
+
+			for (var i = 0; i < 4; i++) _ColorBuffer[i] = color[i];
+
+			var uniforms = _LineShader.uniforms;
+			_GL.uniform4fv(uniforms.Color, _ColorBuffer);
+			_GL.uniform1f(uniforms.Thickness, thickness);
+			_GL.uniformMatrix4fv(uniforms.ModelView, false, view);
+			_GL.uniformMatrix4fv(uniforms.ProjectionMatrix, false, projection);
+
+			_GL.drawArrays(_GL.TRIANGLE_STRIP, 0, line.length/5);
+		}
+
 		var _MeshBuffer = _MakeVertexBuffer();
 		var _SecondaryColorBuffer = new Float32Array(4);
 		function _DrawWireFrame(view, transform, mesh, thickness, edgeColor, innerColor)
@@ -895,6 +911,7 @@ var Graphics = (function()
 		this.drawTextured = _DrawTextured;
 		this.drawColored = _DrawColored;
 		this.drawLine = _DrawLine;
+		this.drawLine3D = _DrawLine3D;
 		this.drawWireFrame = _DrawWireFrame;
 		this.enableDepthTest = _EnableDepthTest;
 		this.enableDepthWrite = _EnableDepthWrite;

@@ -2787,7 +2787,73 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    return out;
 	};
+	
+mat4.fromEulerPositionScale = function(out, r, p, scale)
+{
+    var yaw = r[1];
+    var pitch = r[0];
+    var roll = r[2];
+    var tmp_ch = Math.cos(yaw);
+    var tmp_sh = Math.sin(yaw);
+    var tmp_cp = Math.cos(pitch);
+    var tmp_sp = Math.sin(pitch);
+    var tmp_cb = Math.cos(roll);
+    var tmp_sb = Math.sin(roll);
 
+
+    //detail::tmat4x4<T, defaultp> Result;
+    /*Result[0][0] = */out[0] = (tmp_ch * tmp_cb + tmp_sh * tmp_sp * tmp_sb)*scale;
+    /*Result[0][1] = */out[1] = (tmp_sb * tmp_cp)*scale;
+    /*Result[0][2] = */out[2] = (-tmp_sh * tmp_cb + tmp_ch * tmp_sp * tmp_sb)*scale;
+    /*Result[0][3] = */out[3] = 0;
+    /*Result[1][0] = */out[4] = (-tmp_ch * tmp_sb + tmp_sh * tmp_sp * tmp_cb)*scale;
+    /*Result[1][1] = */out[5] = (tmp_cb * tmp_cp)*scale;
+    /*Result[1][2] = */out[6] = (tmp_sb * tmp_sh + tmp_ch * tmp_sp * tmp_cb)*scale;
+    /*Result[1][3] = */out[7] = 0;
+    /*Result[2][0] = */out[8] = (tmp_sh * tmp_cp)*scale;
+    /*Result[2][1] = */out[9] = (-tmp_sp)*scale;
+    /*Result[2][2] = */out[10] = (tmp_ch * tmp_cp)*scale;
+    /*Result[2][3] = */out[11] = 0;
+    /*Result[3][0] = */out[12] = p[0];
+    /*Result[3][1] = */out[13] = p[1];
+    /*Result[3][2] = */out[14] = p[2];
+    /*Result[3][3] = */out[15] = 1;
+
+    return out;
+};
+
+mat4.fromEulerPositionScale3 = function(out, r, p, scale)
+{
+    var yaw = r[1];
+    var pitch = r[0];
+    var roll = r[2];
+    var tmp_ch = Math.cos(yaw);
+    var tmp_sh = Math.sin(yaw);
+    var tmp_cp = Math.cos(pitch);
+    var tmp_sp = Math.sin(pitch);
+    var tmp_cb = Math.cos(roll);
+    var tmp_sb = Math.sin(roll);
+
+    //detail::tmat4x4<T, defaultp> Result;
+    /*Result[0][0] = */out[0] = (tmp_ch * tmp_cb + tmp_sh * tmp_sp * tmp_sb)*scale[0];
+    /*Result[0][1] = */out[1] = (tmp_sb * tmp_cp)*scale[0];
+    /*Result[0][2] = */out[2] = (-tmp_sh * tmp_cb + tmp_ch * tmp_sp * tmp_sb)*scale[0];
+    /*Result[0][3] = */out[3] = 0;
+    /*Result[1][0] = */out[4] = (-tmp_ch * tmp_sb + tmp_sh * tmp_sp * tmp_cb)*scale[1];
+    /*Result[1][1] = */out[5] = (tmp_cb * tmp_cp)*scale[1];
+    /*Result[1][2] = */out[6] = (tmp_sb * tmp_sh + tmp_ch * tmp_sp * tmp_cb)*scale[1];
+    /*Result[1][3] = */out[7] = 0;
+    /*Result[2][0] = */out[8] = (tmp_sh * tmp_cp)*scale[2];
+    /*Result[2][1] = */out[9] = (-tmp_sp)*scale[2];
+    /*Result[2][2] = */out[10] = (tmp_ch * tmp_cp)*scale[2];
+    /*Result[2][3] = */out[11] = 0;
+    /*Result[3][0] = */out[12] = p[0];
+    /*Result[3][1] = */out[13] = p[1];
+    /*Result[3][2] = */out[14] = p[2];
+    /*Result[3][3] = */out[15] = 1;
+
+    return out;
+};
 	/**
 	 * Creates a matrix from a quaternion rotation, vector translation and vector scale
 	 * This is equivalent to (but much faster than):
